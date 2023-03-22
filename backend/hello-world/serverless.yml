@@ -1,0 +1,33 @@
+service: slack-issue-helper/hello-world
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  lambdaHashingVersion: 20201221
+  region: ap-northeast-2
+  timeout: 30
+  environment:
+    TZ: Asia/Seoul
+
+functions:
+  hello-word:
+    handler: src/handler.server
+    events:
+      - http:
+          path: /{proxy+}
+          method: ANY
+          cors: true
+
+useDotenv: true
+
+plugins:
+  - serverless-esbuild
+  - serverless-dotenv-plugin
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    noPrependStageInUrl: true
+  esbuild:
+    bundle: true
