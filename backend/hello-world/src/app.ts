@@ -1,14 +1,11 @@
 import Express, { json, urlencoded } from 'express'
+import {slackController} from "./routes/slack.controller";
 
 const app = Express()
 
 app.use(json())
 app.use(urlencoded({ extended: true }))
 
-app.get('/', (req, res) => {
-  res
-    .status(200)
-    .send('hello-world')
-})
+app.use('/slack', slackController)
 
 export default app

@@ -11,7 +11,5 @@
     "common/eslint-custom",
     "backend/hello-world"
   ],
-  "dependencies": {
-    "openai": "^3.2.1"
-  }
+  "dependencies": {}
 }

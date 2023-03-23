@@ -1,4 +1,4 @@
-service: slack-issue-helper/hello-world
+service: slack-issue-helper-hello-world
 frameworkVersion: '3'
 
 provider:
