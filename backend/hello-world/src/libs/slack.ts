@@ -1,7 +1,6 @@
 import { WebClient } from "@slack/web-api";
 import * as process from "process";
 import {RequestHandler} from "express";
-import {verifyRequestSignature} from "@slack/events-api";
 
 export const slackWeb = new WebClient(process.env.SLACK_TOKEN)
 
