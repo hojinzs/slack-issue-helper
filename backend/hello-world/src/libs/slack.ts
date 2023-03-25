@@ -104,6 +104,7 @@ export interface SlackEvent {
   team: string;
   channel: string;
   event_ts: string;
+  thread_ts?: string
 }
 
 export interface SlackAuthorization {

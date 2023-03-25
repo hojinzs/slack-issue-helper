@@ -191,4 +191,18 @@ export async function slackMessageActionIssueCreate(data: SlackMessageAction) {
 
 export async function slackEventAppMentionService(payload: SlackEventCallback) {
   console.log('slackEventAppMentionService', payload)
+
+  const message = payload.event.text.replace(/(<@\w+>)/g, '')
+
+  const response = await summaryChatContext({
+    request: message
+  })
+
+  const responseMessage = response[0].message?.content ?? '요약 실패'
+
+  await slackWeb.chat.postMessage({
+    thread_ts: payload.event.thread_ts,
+    channel: payload.event.channel,
+    text: responseMessage
+  })
 }
