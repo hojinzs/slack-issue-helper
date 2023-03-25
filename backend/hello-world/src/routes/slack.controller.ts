@@ -1,5 +1,6 @@
 import {Router} from "express";
 import {
+  SlackBlockAction,
   SlackEventCallback,
   SlackMessageAction,
   SlackShortcutPayload,
@@ -7,7 +8,11 @@ import {
   verifyingRequest
 } from "../libs/slack";
 import {summaryChatContext} from "../libs/openAi";
-import {slackEventAppMentionService, slackShortcutThreadSummaryService} from "./slack.service";
+import {
+  slackEventAppMentionService,
+  slackMessageActionIssueCreate,
+  slackMessageActionThreadSummary
+} from "./slack.service";
 
 export const slackController = Router()
 
@@ -54,15 +59,25 @@ slackController.post('/shortcut', async (req, res) => {
 
   const request = JSON.parse(req.body.payload) as SlackShortcutPayload
 
-  if(request.type === 'message_action') {
-    const payload = request as SlackMessageAction
-    switch (payload.callback_id) {
+  if (request.type === 'block_actions') {
+    const blockActionsPayload = request as SlackBlockAction
+    const actionId = blockActionsPayload.actions[0].action_id
+
+    switch (actionId) {
+      case 'issue_create':
+        await slackMessageActionIssueCreate(request as SlackMessageAction)
+        break
+    }
+
+  } else {
+    switch (request.callback_id) {
       case 'thread_summary':
-        await slackShortcutThreadSummaryService(payload)
+        await slackMessageActionThreadSummary(request as SlackMessageAction)
+        break;
+      default:
+        console.log("global action => ", JSON.stringify(request))
         break;
     }
-  } else {
-    console.log("global action => ", JSON.stringify(request))
   }
 
   res

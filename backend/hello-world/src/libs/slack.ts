@@ -1,4 +1,4 @@
-import { WebClient } from "@slack/web-api";
+import {Block, WebClient} from "@slack/web-api";
 import * as process from "process";
 import {RequestHandler} from "express";
 
@@ -39,6 +39,19 @@ export interface SlackMessageAction extends SlackShortcutPayload {
   response_url: string;
   message_ts: string;
   message: SlackMessage
+}
+
+export interface SlackAction {
+  action_id: string
+  block_id: string,
+  text: Block,
+  value: string,
+  type: string,
+  action_ts: string
+}
+
+export interface SlackBlockAction extends Omit<SlackMessageAction, 'trigger_id'> {
+  actions: Array<SlackAction>
 }
 
 export interface SlackMessage {
