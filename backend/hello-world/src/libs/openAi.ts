@@ -13,7 +13,7 @@ export interface ChatRow {
 }
 
 export interface SummaryChatContextProps {
-  context: ChatRow[]
+  context?: ChatRow[]
   request?: string
   option?: Partial<CreateChatCompletionRequest>
 }
@@ -24,7 +24,7 @@ export async function summaryChatContext({
   option
 }: SummaryChatContextProps) {
 
-  const messages: ChatCompletionRequestMessage[] = context.map(chat => ({ role: 'user', name: chat.speeches, content: chat.message }))
+  const messages: ChatCompletionRequestMessage[] = context ? context.map(chat => ({ role: 'user', name: chat.speeches, content: chat.message })) : []
   const response = await openAi.createChatCompletion({
     model: 'gpt-3.5-turbo',
     messages: [

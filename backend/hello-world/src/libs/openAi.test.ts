@@ -3,7 +3,7 @@ import {summaryChatContext} from "./openAi";
 test('openAi.test message', async function () {
 
   const response = await summaryChatContext({
-    request: '내용 요약. 간결하게',
+    request: '주제 요약',
     context: [
       { speeches: 'A', message: 'GPT를 도입하자'},
       { speeches: 'B', message: 'HELLO WORLD!'},
