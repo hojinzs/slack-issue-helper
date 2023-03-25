@@ -11,6 +11,7 @@ import {summaryChatContext} from "../libs/openAi";
 import {
   slackEventAppMentionService,
   slackMessageActionIssueCreate,
+  slackMessageActionIssuePreview,
   slackMessageActionThreadSummary
 } from "./slack.service";
 
@@ -64,9 +65,12 @@ slackController.post('/shortcut', async (req, res) => {
     const actionId = blockActionsPayload.actions[0].action_id
 
     switch (actionId) {
+      case 'issue_preview':
+        await slackMessageActionIssuePreview(request as SlackMessageAction)
+        break
       case 'issue_create':
         await slackMessageActionIssueCreate(request as SlackMessageAction)
-        break
+        break;
     }
 
   } else {

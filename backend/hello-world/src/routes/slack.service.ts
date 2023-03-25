@@ -55,8 +55,8 @@ export async function slackMessageActionThreadSummary(payload: SlackMessageActio
             text: "이슈 생성",
             emoji: true
           },
-          value: "generate issue",
-          action_id: "issue_create"
+          value: "issue_preview",
+          action_id: "issue_preview"
         }
       }
     ],
@@ -70,12 +70,12 @@ const dummyProjects = [
   { id: 'project3', name: '프로젝트 3'},
 ]
 
-export async function slackMessageActionIssueCreate(payload: SlackMessageAction) {
+export async function slackMessageActionIssuePreview(payload: SlackMessageAction) {
   console.log('slackMessageActionIssueCreate', JSON.stringify(payload))
 
   const response = await summaryChatContext({
     request: `요약 내용으로 일감 생성. 아래 형식으로만 출력
-    요약내용: ${payload.message.text},
+    요약: ${payload.message.text},
     형식: { "title": ###, "description": ### }
     `,
     option: {
@@ -178,11 +178,14 @@ export function generateJiraIssueCreateForm(props: {
           emoji: true
         },
         value: "click_me_123",
-        url: "https://google.com",
-        action_id: "button-action"
+        action_id: "issue_create"
       }
     }
   ]
+}
+
+export async function slackMessageActionIssueCreate(data: SlackMessageAction) {
+  console.log('slackMessageActionIssueCreate', JSON.stringify(data))
 }
 
 
