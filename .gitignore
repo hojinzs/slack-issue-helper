@@ -1,0 +1,7 @@
+.env
+.tsbuildinfo
+.build
+.serverless
+.esbuild
+
+node_modules
