@@ -1,68 +1,9 @@
-import {SlackEventCallback, SlackMessageAction, slackWeb} from "../libs/slack";
-import {ChatRow, summaryChatContext} from "../libs/openAi";
+import {SlackMessageAction, slackWeb} from "../libs/slack";
+import {summaryChatContext} from "../libs/openAi";
 import {Block, KnownBlock} from "@slack/web-api";
+import {sendMessage, SqsMessageBody} from "../libs/sqs";
 
-
-export async function slackMessageActionThreadSummary(payload: SlackMessageAction) {
-  console.log('slackMessageActionThreadSummary', JSON.stringify(payload))
-
-  const conversationList = await slackWeb.conversations.replies({
-    ts: payload.message.thread_ts,
-    channel: payload.channel.id
-  })
-
-  const contexts: ChatRow[] = conversationList.messages ? conversationList.messages
-    .map(message => {
-      return {
-        speeches: message.user ?? 'unknown',
-        message: message.text ?? ''
-      }
-    })
-      .filter(msg => msg.speeches !== 'unknown')
-    : []
-
-  const response = await summaryChatContext({
-    request: '주제 요약',
-    context: contexts
-  })
-
-  const summaryMessage = response[0].message?.content ?? '요약 실패'
-
-  await slackWeb.chat.postMessage({
-    thread_ts: payload.message.thread_ts,
-    text: summaryMessage,
-    blocks: [
-      {
-        type: "section",
-        text: {
-          type: "plain_text",
-          text: summaryMessage
-        }
-      },
-      {
-        type: "divider"
-      },
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: "이슈 생성 미리보기"
-        },
-        accessory: {
-          type: "button",
-          text: {
-            type: "plain_text",
-            text: "이슈 생성",
-            emoji: true
-          },
-          value: "issue_preview",
-          action_id: "issue_preview"
-        }
-      }
-    ],
-    channel: payload.channel.id
-  })
-}
+export type SlackIssuePreviewMessageBody = SqsMessageBody<'issue_preview', SlackMessageAction>
 
 const dummyProjects = [
   { id: 'project1', name: '프로젝트 1'},
@@ -70,8 +11,17 @@ const dummyProjects = [
   { id: 'project3', name: '프로젝트 3'},
 ]
 
-export async function slackMessageActionIssuePreview(payload: SlackMessageAction) {
-  console.log('slackMessageActionIssueCreate', JSON.stringify(payload))
+export async function pubIssuePreview(payload: SlackMessageAction) {
+  const messageBody: SlackIssuePreviewMessageBody = {
+    eventType: 'issue_preview',
+    body: payload
+  }
+
+  return sendMessage(JSON.stringify(messageBody))
+}
+
+export async function subIssuePreview(body: SlackIssuePreviewMessageBody) {
+  const payload = body.body
 
   const response = await summaryChatContext({
     request: `요약 내용으로 일감 생성. 아래 형식으로만 출력
@@ -85,7 +35,6 @@ export async function slackMessageActionIssuePreview(payload: SlackMessageAction
 
   const issue = JSON.parse(response[0].message.content) as { title: string, description: string }
 
-  console.log("issue => ", issue)
 
   await slackWeb.chat.postMessage({
     thread_ts: payload.message.thread_ts ?? undefined,
@@ -182,27 +131,4 @@ export function generateJiraIssueCreateForm(props: {
       }
     }
   ]
-}
-
-export async function slackMessageActionIssueCreate(data: SlackMessageAction) {
-  console.log('slackMessageActionIssueCreate', JSON.stringify(data))
-}
-
-
-export async function slackEventAppMentionService(payload: SlackEventCallback) {
-  console.log('slackEventAppMentionService', payload)
-
-  const message = payload.event.text.replace(/(<@\w+>)/g, '')
-
-  const response = await summaryChatContext({
-    request: message
-  })
-
-  const responseMessage = response[0].message?.content ?? '요약 실패'
-
-  await slackWeb.chat.postMessage({
-    thread_ts: payload.event.thread_ts,
-    channel: payload.event.channel,
-    text: responseMessage
-  })
 }

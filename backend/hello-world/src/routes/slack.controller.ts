@@ -8,12 +8,10 @@ import {
   verifyingRequest
 } from "../libs/slack";
 import {summaryChatContext} from "../libs/openAi";
-import {
-  slackEventAppMentionService,
-  slackMessageActionIssueCreate,
-  slackMessageActionIssuePreview,
-  slackMessageActionThreadSummary
-} from "./slack.service";
+import {pubAppMention} from "../service/slack.appMention";
+import {pubSummaryMessage} from "../service/slack.threadSummary";
+import {pubIssuePreview} from "../service/slack.issuePreview";
+import {pubIssueCreate} from "../service/slack.issueCreate";
 
 export const slackController = Router()
 
@@ -66,17 +64,18 @@ slackController.post('/shortcut', async (req, res) => {
 
     switch (actionId) {
       case 'issue_preview':
-        await slackMessageActionIssuePreview(request as SlackMessageAction)
+        await pubIssuePreview(request as SlackMessageAction)
         break
       case 'issue_create':
-        await slackMessageActionIssueCreate(request as SlackMessageAction)
+        await pubIssueCreate(request as SlackMessageAction)
         break;
     }
 
   } else {
+
     switch (request.callback_id) {
       case 'thread_summary':
-        await slackMessageActionThreadSummary(request as SlackMessageAction)
+        await pubSummaryMessage(request as SlackMessageAction)
         break;
       default:
         console.log("global action => ", JSON.stringify(request))
@@ -86,7 +85,7 @@ slackController.post('/shortcut', async (req, res) => {
 
   res
     .status(200)
-    .send('summary')
+    .send('ok')
 })
 
 slackController.post(
@@ -99,7 +98,7 @@ slackController.post(
 
     switch (payload.event.type) {
       case 'app_mention':
-        await slackEventAppMentionService(payload)
+        await pubAppMention(payload)
         break;
     }
 
