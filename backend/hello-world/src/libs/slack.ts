@@ -128,7 +128,6 @@ export interface SlackEventCallback {
   event_context: string;
 }
 
-
 export const slackWeb = new WebClient(process.env.SLACK_TOKEN)
 
 export const verifyingRequest: RequestHandler = (req, res, next) => {

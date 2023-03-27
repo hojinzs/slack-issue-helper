@@ -1,7 +1,6 @@
 import {SlackMessageAction} from "../libs/slack";
 import {sendMessage, SqsMessageBody} from "../libs/sqs";
 
-
 export type SlackIssueCreateMessageBody = SqsMessageBody<'issue_create', SlackMessageAction>
 
 export async function pubIssueCreate(payload: SlackMessageAction) {

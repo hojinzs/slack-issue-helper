@@ -1,7 +1,8 @@
 import {SlackMessageAction, slackWeb} from "../libs/slack";
-import {summaryChatContext} from "../libs/openAi";
+import {chatCompletion} from "../libs/openAi";
 import {Block, KnownBlock} from "@slack/web-api";
 import {sendMessage, SqsMessageBody} from "../libs/sqs";
+import {getChatCompletionProps} from "../libs/airtable";
 
 export type SlackIssuePreviewMessageBody = SqsMessageBody<'issue_preview', SlackMessageAction>
 
@@ -23,29 +24,42 @@ export async function pubIssuePreview(payload: SlackMessageAction) {
 export async function subIssuePreview(body: SlackIssuePreviewMessageBody) {
   const payload = body.body
 
-  const response = await summaryChatContext({
-    request: `요약 내용으로 일감 생성. 아래 형식으로만 출력
-    요약: ${payload.message.text},
-    형식: { "title": ###, "description": ### }
-    `,
-    option: {
-      temperature: 0
-    }
+  const summaryText = payload.message.text
+
+  const { request, ...props } = await getChatCompletionProps('issue_preview')
+
+  const response = await chatCompletion({
+    request: `${request}
+    아래 형식으로만 출력
+    - 요약: ${summaryText},
+    - 형식: { "title": ###, "description": ### }`,
+    ...props
   })
 
-  const issue = JSON.parse(response[0].message.content) as { title: string, description: string }
+  const responseMessage = response.message?.content
 
+  console.log("response message => ", responseMessage)
 
-  await slackWeb.chat.postMessage({
-    thread_ts: payload.message.thread_ts ?? undefined,
-    channel: payload.channel.id,
-    text: JSON.stringify(issue),
-    blocks: generateJiraIssueCreateForm({
-      projects: dummyProjects,
-      titleDraft: issue.title,
-      descriptionDraft: issue.description
+  if(!responseMessage) {
+    await slackWeb.chat.postMessage({
+      thread_ts: payload.message.thread_ts ?? undefined,
+      channel: payload.channel.id,
+      text: '이슈 미리보기 생성 실패'
     })
-  })
+  } else {
+    const issue = JSON.parse(responseMessage) as { title: string, description: string }
+
+    await slackWeb.chat.postMessage({
+      thread_ts: payload.message.thread_ts ?? undefined,
+      channel: payload.channel.id,
+      text: '이슈 생성 미리보기: '+issue.title,
+      blocks: generateJiraIssueCreateForm({
+        projects: dummyProjects,
+        titleDraft: issue.title,
+        descriptionDraft: issue.description
+      })
+    })
+  }
 }
 
 export function generateJiraIssueCreateForm(props: {

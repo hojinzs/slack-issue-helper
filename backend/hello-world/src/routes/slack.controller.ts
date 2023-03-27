@@ -4,10 +4,8 @@ import {
   SlackEventCallback,
   SlackMessageAction,
   SlackShortcutPayload,
-  slackWeb,
   verifyingRequest
 } from "../libs/slack";
-import {summaryChatContext} from "../libs/openAi";
 import {pubAppMention} from "../service/slack.appMention";
 import {pubSummaryMessage} from "../service/slack.threadSummary";
 import {pubIssuePreview} from "../service/slack.issuePreview";
@@ -20,38 +18,6 @@ slackController.get('/', (req, res) => {
     .status(200)
     .send('done')
 })
-
-slackController.post(
-  '/hello',
-  async (req, res) => {
-    console.log('request.slack.hello', JSON.stringify(req.body))
-
-    const requestMessage = req.body.text
-
-    await slackWeb.chat.postMessage({
-      text: `'${requestMessage}'라고 말씀하셨어요. 잠시만 기다려주세요!`,
-      channel: req.body.channel_id
-    })
-
-    const result = await summaryChatContext({
-      request: '발랄한 막내 느낌으로 질문에 답변',
-      context: [
-        { speeches: req.body.user_id, message: requestMessage }
-      ]
-    })
-
-    const response = result[0].message?.content
-
-    await slackWeb.chat.postMessage({
-      text: response,
-      channel: req.body.channel_id
-    })
-
-    res
-      .status(200)
-      .send('')
-  }
-)
 
 slackController.post('/shortcut', async (req, res) => {
   console.log("request.slack.shortcut", JSON.stringify(req.body))

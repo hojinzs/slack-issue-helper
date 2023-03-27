@@ -4,7 +4,8 @@
  */
 import {SlackEventCallback, slackWeb} from "../libs/slack";
 import {sendMessage, SqsMessageBody} from "../libs/sqs";
-import {summaryChatContext} from "../libs/openAi";
+import {chatCompletion} from "../libs/openAi";
+import {getChatCompletionProps} from "../libs/airtable";
 
 export type SlackAppMentionMessageBody = SqsMessageBody<'app_mention', SlackEventCallback>
 
@@ -20,11 +21,17 @@ export async function subAppMention(payload: SlackAppMentionMessageBody) {
 
   const message = payload.body.event.text.replace(/(<@\w+>)/g, '')
 
-  const response = await summaryChatContext({
-    request: message
+  const { request, ...props } = await getChatCompletionProps('app_mention')
+
+  const response = await chatCompletion({
+    messages: [
+      { role: 'system', content: request },
+      { role: 'user', content: message }
+    ],
+    ...props
   })
 
-  const responseMessage = response[0].message?.content ?? '요약 실패'
+  const responseMessage = response.message?.content ?? '실패'
 
   await slackWeb.chat.postMessage({
     thread_ts: payload.body.event.thread_ts,

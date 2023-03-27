@@ -1,4 +1,10 @@
-import {ChatCompletionRequestMessage, Configuration, CreateChatCompletionRequest, OpenAIApi} from "openai";
+import {
+  ChatCompletionRequestMessage,
+  ChatCompletionRequestMessageRoleEnum,
+  Configuration,
+  CreateChatCompletionRequest, CreateChatCompletionResponseChoicesInner,
+  OpenAIApi
+} from "openai";
 
 const configuration = new Configuration({
   apiKey: process.env.OPEN_AI_SECRET_KEY,
@@ -12,27 +18,26 @@ export interface ChatRow {
   message: string
 }
 
-export interface SummaryChatContextProps {
-  context?: ChatRow[]
+export interface ChatCompletionProps extends Partial<CreateChatCompletionRequest> {
   request?: string
-  option?: Partial<CreateChatCompletionRequest>
+  chat?: ChatRow[]
 }
 
-export async function summaryChatContext({
-  context,
-  request,
-  option
-}: SummaryChatContextProps) {
+export async function chatCompletion({ request, chat, ...props}: ChatCompletionProps): Promise<CreateChatCompletionResponseChoicesInner> {
 
-  const messages: ChatCompletionRequestMessage[] = context ? context.map(chat => ({ role: 'user', name: chat.speeches, content: chat.message })) : []
+  const chatMessages: ChatCompletionRequestMessage[]|undefined = chat?.map(chat => ({
+    role: 'user' as ChatCompletionRequestMessageRoleEnum,
+    name: chat.speeches,
+    content: chat.message
+  })) || []
+
   const response = await openAi.createChatCompletion({
     model: 'gpt-3.5-turbo',
-    messages: [
-      ...messages,
-      { role: 'system', content: request ?? '주제 요약' }
-    ],
-    ...option
+    messages: request
+      ? [...chatMessages, { role: 'system', content: request }]
+      : [...chatMessages],
+    ...props
   })
 
-  return response.data.choices
+  return response.data.choices[0]
 }
