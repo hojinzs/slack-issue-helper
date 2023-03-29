@@ -3,24 +3,16 @@ import * as process from "process";
 
 export const sqs = new SQS()
 
-export async function sendMessage(data: string) {
+export const queueUrl = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT_ID}/${process.env.AWS_QUEUE_NAME}`
 
-  // const queueUrl = await sqs.getQueueUrl({
-  //   QueueName: 'MyQueue'
-  // }).promise()
-  //
-  // if(!queueUrl.QueueUrl) {
-  //   throw new Error('queue url undefined')
-  // }
+export async function sendMessage(data: string) {
 
   console.log("sqsSendMessage.data", data)
 
   const response = await sqs.sendMessage({
     MessageBody: data,
-    QueueUrl: process.env.AWS_QUEUE_URL
+    QueueUrl: queueUrl
   }).promise()
-
-  console.log("response => ", response)
 
   return response
 }

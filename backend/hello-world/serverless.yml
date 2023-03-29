@@ -1,4 +1,4 @@
-service: slack-issue-helper-hello-world
+service: slack-issue-maker
 frameworkVersion: '3'
 
 provider:
@@ -12,11 +12,11 @@ provider:
       Action:
         - "sqs:SendMessage"
         - "sqs:GetQueueUrl"
-      Resource: "arn:aws:sqs:${self:provider.region}:173249517772:MyQueue"
+      Resource: !Sub "arn:aws:sqs:${self:provider.region}:${AWS::AccountId}:SlackQueue"
     - Effect: "Allow"
       Action:
         - "sqs:ListQueues"
-      Resource: "arn:aws:sqs:${self:provider.region}:173249517772:*"
+      Resource: !Sub "arn:aws:sqs:${self:provider.region}:${AWS::AccountId}:*"
   environment:
     TZ: Asia/Seoul
 
@@ -34,15 +34,16 @@ functions:
       - sqs:
           arn:
             Fn::GetAtt:
-              - MyQueue
+              - SlackQueue
               - Arn
 
 resources:
   Resources:
-    MyQueue:
+    SlackQueue:
       Type: "AWS::SQS::Queue"
       Properties:
-        QueueName: "MyQueue"
+        QueueName: "SlackQueue"
+        VisibilityTimeout: 120
         MessageRetentionPeriod: 120
 
 useDotenv: true

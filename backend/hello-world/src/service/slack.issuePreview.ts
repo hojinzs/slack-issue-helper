@@ -24,6 +24,12 @@ export async function pubIssuePreview(payload: SlackMessageAction) {
 export async function subIssuePreview(body: SlackIssuePreviewMessageBody) {
   const payload = body.body
 
+  const placeholderMsg = await slackWeb.chat.postMessage({
+    thread_ts: payload.message.thread_ts ?? undefined,
+    channel: payload.channel.id,
+    text: '이슈 생성 내용을 만들고 있어요. 잠시만 기다려주세요'
+  })
+
   const summaryText = payload.message.text
 
   const { request, ...props } = await getChatCompletionProps('issue_preview')
@@ -40,6 +46,13 @@ export async function subIssuePreview(body: SlackIssuePreviewMessageBody) {
 
   console.log("response message => ", responseMessage)
 
+  if(placeholderMsg.ts) {
+    await slackWeb.chat.delete({
+      ts: placeholderMsg.ts,
+      channel: placeholderMsg.channel ?? payload.channel.id
+    })
+  }
+
   if(!responseMessage) {
     await slackWeb.chat.postMessage({
       thread_ts: payload.message.thread_ts ?? undefined,
@@ -48,6 +61,33 @@ export async function subIssuePreview(body: SlackIssuePreviewMessageBody) {
     })
   } else {
     const issue = JSON.parse(responseMessage) as { title: string, description: string }
+
+    // await slackWeb.views.open({
+    //   trigger_id: payload.trigger_id,
+    //   view: {
+    //     type: "modal",
+    //     callback_id: "modal-identifier",
+    //     title: {
+    //       type: "plain_text",
+    //       text: '이슈 생성 미리보기'
+    //     },
+    //     blocks: generateJiraIssueCreateForm({
+    //       projects: dummyProjects,
+    //       titleDraft: issue.title,
+    //       descriptionDraft: issue.description
+    //     }),
+    //     submit: {
+    //       type: "plain_text",
+    //       text: "등록",
+    //       emoji: true
+    //     },
+    //     close: {
+    //       type: "plain_text",
+    //       text: "취소",
+    //       emoji: true
+    //     },
+    //   }
+    // })
 
     await slackWeb.chat.postMessage({
       thread_ts: payload.message.thread_ts ?? undefined,

@@ -21,6 +21,7 @@ slackController.get('/', (req, res) => {
 
 slackController.post('/shortcut', async (req, res) => {
   console.log("request.slack.shortcut", JSON.stringify(req.body))
+  const start = Number(new Date())
 
   const request = JSON.parse(req.body.payload) as SlackShortcutPayload
 
@@ -37,7 +38,7 @@ slackController.post('/shortcut', async (req, res) => {
         break;
     }
 
-  } else {
+  } else if(request.type === 'message_action') {
 
     switch (request.callback_id) {
       case 'thread_summary':
@@ -49,9 +50,13 @@ slackController.post('/shortcut', async (req, res) => {
     }
   }
 
+  const end = Number(new Date())
+
+  console.log(`start: ${start}, end: ${end}, duration: ${end - start}`)
+
   res
     .status(200)
-    .send('ok')
+    .send()
 })
 
 slackController.post(
@@ -59,6 +64,14 @@ slackController.post(
   verifyingRequest,
   async (req, res) => {
     console.log("request.slack.event", JSON.stringify(req.body))
+
+    if(req.body.type === 'url_verification') {
+      return res
+        .status(200)
+        .json({
+          challenge: req.body.challenge
+        })
+    }
 
     const payload = req.body as SlackEventCallback
 
