@@ -1,0 +1,49 @@
+name: Development Deployment
+
+on:
+  push:
+    branches:
+      - production
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    env:
+      working-directory: ./backend/hello-world
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+
+      - name: Create environment file
+        uses: SpicyPizza/create-envfile@v1.3
+        with:
+          envkey_OPEN_AI_SECRET_KEY: ${{ secrets.OPEN_AI_SECRET_KEY }}
+          envkey_OPEN_AI_ORG_ID: ${{ secrets.OPEN_AI_ORG_ID }}
+          envkey_SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+          envkey_SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
+          envkey_AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          envkey_AWS_QUEUE_NAME: ${{ secrets.AWS_QUEUE_NAME }}
+          envkey_AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
+          envkey_AIRTABLE_BASE: ${{ secrets.AIRTABLE_BASE }}
+          directory: ${{env.working-directory}}
+
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: ${{ env.working-directory }}
+
+      - name: Install Serverless
+        run: npm install -g serverless
+        working-directory: ${{ env.working-directory }}
+
+      - name: Set Serverless Credential
+        run: serverless config credentials --provider aws --key ${{ secrets.AWS_ACCESS_KEY_ID }} --secret ${{ secrets.AWS_SECRET_ACCESS_KEY }} --profile default
+        working-directory: ${{ env.working-directory }}
+
+      - name: Serverless Deploy
+        run: serverless deploy --stage dev --aws-profile default
+        working-directory: ${{ env.working-directory }}
