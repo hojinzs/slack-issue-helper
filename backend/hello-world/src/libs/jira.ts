@@ -3,10 +3,12 @@ import axios, {type AxiosInstance} from "axios";
 export interface JiraClientInitialize {
   token: string
   host: string
+  username: string
 }
 
 export interface JiraClientHeader {
   host: string
+  username: string
   token: string
 }
 
@@ -21,11 +23,13 @@ export class JiraClient {
   fetch: AxiosInstance = axios.create()
 
   configFetch(config: JiraClientHeader) {
-    const instance = axios.create({
-      baseURL: config.host+'/rest/api/2'
+    this.fetch = axios.create({
+      baseURL: config.host + '/rest/api/3',
+      auth: {
+        username: config.username,
+        password: config.token
+      }
     })
-    instance.defaults.headers.common['Authorization'] = `Bearer ${config.token}`
-    this.fetch = instance
   }
 
   static create(options: JiraClientInitialize) {
@@ -38,7 +42,6 @@ export class JiraClient {
     return this.fetch.get('mypermissions', {
       params: {
         permissions: 'BROWSE_PROJECTS',
-        projectKey: 'IS'
       }
     })
   }
