@@ -11,3 +11,15 @@ test('slack.test', async function () {
   console.log("result => ", result)
 
 })
+
+
+test('slack.chat.', async function () {
+
+  const conversations = await slackWeb.conversations.replies({
+    ts: '1680410948.295059',
+    channel: 'C04V9ANGR5Z'
+  })
+
+  console.log(JSON.stringify(converstations))
+
+})
