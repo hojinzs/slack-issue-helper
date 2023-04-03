@@ -1,4 +1,7 @@
-import {chatCompletion} from "./openAi";
+import { ProcessChatMessage } from "./chat";
+import { chatCompletion } from "./openAi";
+import { conversationsMocks } from "./slack.mock";
+
 
 test('openAi.chatCompletion.test', async function () {
 
@@ -12,4 +15,17 @@ test('openAi.chatCompletion.test', async function () {
     ]
   })
   console.log("response => ", JSON.stringify(response))
+})
+
+test('openAi.chatCompletion.test', async function() {
+
+  const response = await chatCompletion({
+    request: '주제 요약',
+    chat: ProcessChatMessage(conversationsMocks)
+  })
+  
+  console.log("response => ", JSON.stringify(response))
+
+  
+ 
 })
