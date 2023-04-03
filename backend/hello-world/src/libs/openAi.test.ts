@@ -11,5 +11,5 @@ test('openAi.chatCompletion.test', async function () {
       { speeches: 'D', message: '좋아요. 빠르게 도입해보죠'},
     ]
   })
-  console.log("response => ", response[0].message?.content)
+  console.log("response => ", JSON.stringify(response))
 })
