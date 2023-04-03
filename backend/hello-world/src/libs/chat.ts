@@ -30,7 +30,7 @@ export function ProcessChatMessage(data : any) {
 
   const textArray: string[] = extractTextFromBlocks(data);
   let questionData: string = "";
-  let returnData: ChatRow[] = [{speeches: "", message: ""}];
+  let returnData: ChatRow[] = [];
   let label: number = 1;
   
   for(let checkingData in textArray){
