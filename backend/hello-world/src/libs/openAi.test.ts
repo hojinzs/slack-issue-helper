@@ -24,7 +24,7 @@ test('openAi.chatCompletion.test', async function() {
     chat: ProcessChatMessage(conversationsMocks)
   })
   
-  console.log('response', response);
+  console.log("response => ", JSON.stringify(response))
 
   
  
