@@ -9,6 +9,11 @@ import {getChatCompletionProps} from "../libs/airtable";
 
 export type SlackThreadSummaryMessageBody = SqsMessageBody<'thread_summary', SlackMessageAction>
 
+
+/**
+ * 주제 요약 Provider
+ * @param payload
+ */
 export async function pubSummaryMessage(payload: SlackMessageAction) {
   const messageBody: SlackThreadSummaryMessageBody = {
     eventType: 'thread_summary',
@@ -18,14 +23,19 @@ export async function pubSummaryMessage(payload: SlackMessageAction) {
   return sendMessage(JSON.stringify(messageBody))
 }
 
-export async function subSummaryMessage(body: SlackThreadSummaryMessageBody) {
 
+/**
+ * 주제 요약 Consumer
+ * @param body
+ */
+export async function subSummaryMessage(body: SlackThreadSummaryMessageBody) {
   const payload = body.body
+  const originTs = payload.message.thread_ts ?? payload.message_ts
 
   const { request, ...props } = await getChatCompletionProps('thread_summary')
 
   const conversationList = await slackWeb.conversations.replies({
-    ts: payload.message.thread_ts,
+    ts: originTs,
     channel: payload.channel.id
   })
 
@@ -39,6 +49,12 @@ export async function subSummaryMessage(body: SlackThreadSummaryMessageBody) {
       .filter(msg => msg.speeches !== 'unknown')
     : []
 
+  const processingMessage = await slackWeb.chat.postMessage({
+    thread_ts: originTs,
+    text: '주제를 요약하고 있어요. 잠시만 기다려주세요~',
+    channel: payload.channel.id
+  })
+
   const response = await chatCompletion({
     request: request ?? '주제 요약',
     chat: contexts,
@@ -47,9 +63,17 @@ export async function subSummaryMessage(body: SlackThreadSummaryMessageBody) {
 
   const responseMessage = response.message?.content ?? '실패'
 
+  if(processingMessage.ts) {
+    await slackWeb.chat.delete({
+      ts: processingMessage.ts,
+      channel: payload.channel.id,
+    })
+  }
+
   await slackWeb.chat.postMessage({
-    thread_ts: payload.message.thread_ts,
+    thread_ts: originTs,
     text: responseMessage,
+    channel: payload.channel.id,
     blocks: [
       {
         type: "section",
@@ -79,6 +103,5 @@ export async function subSummaryMessage(body: SlackThreadSummaryMessageBody) {
         }
       }
     ],
-    channel: payload.channel.id
   })
 }

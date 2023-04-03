@@ -13,10 +13,10 @@ export interface JiraClientHeader {
 }
 
 export interface JiraIssueCreatePayload {
-  project: string
+  projectId: string
+  issueTypeId: string
   summary: string,
   description: string
-  type: string
 }
 
 export interface JiraProject {
@@ -58,6 +58,11 @@ export interface JiraIssueType {
   };
 }
 
+export interface JiraIssueCreateResult {
+  id: string,
+  key: string,
+  self: string
+}
 
 
 export class JiraClient {
@@ -97,15 +102,26 @@ export class JiraClient {
     return issueTypes.data as JiraIssueType[]
   }
 
-  createIssue(payload: JiraIssueCreatePayload) {
-    return this.fetch.post('issue', {
+  async createIssue(payload: JiraIssueCreatePayload): Promise<JiraIssueCreateResult> {
+    const response = await this.fetch.post('issue', {
       fields: {
-        project: { key: payload.project },
+        project: { id: payload.projectId },
+        issuetype: { id: payload.issueTypeId },
         summary: payload.summary,
-        description: payload.description,
-        issueType: { name: payload.type }
+        description: {
+          content: [{
+            type: "paragraph",
+            content: [{
+              text: payload.description,
+              type: "text"
+            }],
+          }],
+          type: "doc",
+          version: 1
+        },
       }
     })
+    return response.data
   }
 
   getIssue(id: string) {
