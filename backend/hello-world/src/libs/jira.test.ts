@@ -10,7 +10,7 @@ test('jira.projects', async function () {
 
   try {
     const response = await jira.getIssueTypes()
-    console.log("jira permissions => ", response.data)
+    console.log("jira issue types => ", JSON.stringify(response))
   } catch (e) {
 
     if(isAxiosError(e)) {

@@ -19,6 +19,47 @@ export interface JiraIssueCreatePayload {
   type: string
 }
 
+export interface JiraProject {
+  expand: string;
+  self: string;
+  id: string;
+  key: string;
+  name: string;
+  avatarUrls: {
+    '48x48': string;
+    '24x24': string;
+    '16x16': string;
+    '32x32': string;
+  };
+  projectTypeKey: string;
+  simplified: boolean;
+  style: string;
+  isPrivate: boolean;
+  properties: Record<string, unknown>;
+  entityId: string;
+  uuid: string;
+}
+
+export interface JiraIssueType {
+  self: string;
+  id: string;
+  description: string;
+  iconUrl: string;
+  name: string;
+  untranslatedName: string;
+  subtask: boolean;
+  avatarId: number;
+  hierarchyLevel: number;
+  scope: {
+    type: string;
+    project: {
+      id: string;
+    };
+  };
+}
+
+
+
 export class JiraClient {
   fetch: AxiosInstance = axios.create()
 
@@ -46,12 +87,14 @@ export class JiraClient {
     })
   }
 
-  getAllProjects() {
-    return this.fetch.get('project')
+  async getAllProjects(): Promise<JiraProject[]> {
+    const projects =  await this.fetch.get('project')
+    return projects.data as JiraProject[]
   }
 
-  getIssueTypes() {
-    return this.fetch.get('issuetype')
+  async getIssueTypes(): Promise<JiraIssueType[]> {
+    const issueTypes =  await this.fetch.get('issuetype')
+    return issueTypes.data as JiraIssueType[]
   }
 
   createIssue(payload: JiraIssueCreatePayload) {
