@@ -28,8 +28,11 @@ jobs:
           envkey_SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
           envkey_AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           envkey_AWS_QUEUE_NAME: ${{ secrets.AWS_QUEUE_NAME }}
-          envkey_AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
           envkey_AIRTABLE_BASE: ${{ secrets.AIRTABLE_BASE }}
+          envkey_AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
+          envkey_JIRA_HOST: ${{ secrets.JIRA_HOST }}
+          envkey_JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
+          envkey_JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
           directory: ${{env.working-directory}}
 
       - name: Install Dependencies
