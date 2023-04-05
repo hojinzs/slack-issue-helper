@@ -13,11 +13,57 @@ export interface JiraClientHeader {
 }
 
 export interface JiraIssueCreatePayload {
-  project: string
+  projectId: string
+  issueTypeId: string
   summary: string,
   description: string
-  type: string
 }
+
+export interface JiraProject {
+  expand: string;
+  self: string;
+  id: string;
+  key: string;
+  name: string;
+  avatarUrls: {
+    '48x48': string;
+    '24x24': string;
+    '16x16': string;
+    '32x32': string;
+  };
+  projectTypeKey: string;
+  simplified: boolean;
+  style: string;
+  isPrivate: boolean;
+  properties: Record<string, unknown>;
+  entityId: string;
+  uuid: string;
+}
+
+export interface JiraIssueType {
+  self: string;
+  id: string;
+  description: string;
+  iconUrl: string;
+  name: string;
+  untranslatedName: string;
+  subtask: boolean;
+  avatarId: number;
+  hierarchyLevel: number;
+  scope: {
+    type: string;
+    project: {
+      id: string;
+    };
+  };
+}
+
+export interface JiraIssueCreateResult {
+  id: string,
+  key: string,
+  self: string
+}
+
 
 export class JiraClient {
   fetch: AxiosInstance = axios.create()
@@ -46,23 +92,36 @@ export class JiraClient {
     })
   }
 
-  getAllProjects() {
-    return this.fetch.get('project')
+  async getAllProjects(): Promise<JiraProject[]> {
+    const projects =  await this.fetch.get('project')
+    return projects.data as JiraProject[]
   }
 
-  getIssueTypes() {
-    return this.fetch.get('issuetype')
+  async getIssueTypes(): Promise<JiraIssueType[]> {
+    const issueTypes =  await this.fetch.get('issuetype')
+    return issueTypes.data as JiraIssueType[]
   }
 
-  createIssue(payload: JiraIssueCreatePayload) {
-    return this.fetch.post('issue', {
+  async createIssue(payload: JiraIssueCreatePayload): Promise<JiraIssueCreateResult> {
+    const response = await this.fetch.post('issue', {
       fields: {
-        project: { key: payload.project },
+        project: { id: payload.projectId },
+        issuetype: { id: payload.issueTypeId },
         summary: payload.summary,
-        description: payload.description,
-        issueType: { name: payload.type }
+        description: {
+          content: [{
+            type: "paragraph",
+            content: [{
+              text: payload.description,
+              type: "text"
+            }],
+          }],
+          type: "doc",
+          version: 1
+        },
       }
     })
+    return response.data
   }
 
   getIssue(id: string) {

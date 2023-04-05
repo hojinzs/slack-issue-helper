@@ -3,14 +3,10 @@ import {chatCompletion} from "../libs/openAi";
 import {Block, KnownBlock} from "@slack/web-api";
 import {sendMessage, SqsMessageBody} from "../libs/sqs";
 import {getChatCompletionProps} from "../libs/airtable";
+import {JiraClient} from "../libs/jira";
+import * as process from "process";
 
 export type SlackIssuePreviewMessageBody = SqsMessageBody<'issue_preview', SlackMessageAction>
-
-const dummyProjects = [
-  { id: 'project1', name: '프로젝트 1'},
-  { id: 'project2', name: '프로젝트 2'},
-  { id: 'project3', name: '프로젝트 3'},
-]
 
 export async function pubIssuePreview(payload: SlackMessageAction) {
   const messageBody: SlackIssuePreviewMessageBody = {
@@ -27,7 +23,7 @@ export async function subIssuePreview(body: SlackIssuePreviewMessageBody) {
   const placeholderMsg = await slackWeb.chat.postMessage({
     thread_ts: payload.message.thread_ts ?? undefined,
     channel: payload.channel.id,
-    text: '이슈 생성 내용을 만들고 있어요. 잠시만 기다려주세요'
+    text: '이슈 생성을 위한 미리보기를 만들고 있어요. 잠시만 기다려주세요'
   })
 
   const summaryText = payload.message.text
@@ -60,41 +56,29 @@ export async function subIssuePreview(body: SlackIssuePreviewMessageBody) {
       text: '이슈 미리보기 생성 실패'
     })
   } else {
-    const issue = JSON.parse(responseMessage) as { title: string, description: string }
+    const issue = JSON.parse(`${responseMessage.replaceAll('\n','')}`) as { title: string, description: string }
 
-    // await slackWeb.views.open({
-    //   trigger_id: payload.trigger_id,
-    //   view: {
-    //     type: "modal",
-    //     callback_id: "modal-identifier",
-    //     title: {
-    //       type: "plain_text",
-    //       text: '이슈 생성 미리보기'
-    //     },
-    //     blocks: generateJiraIssueCreateForm({
-    //       projects: dummyProjects,
-    //       titleDraft: issue.title,
-    //       descriptionDraft: issue.description
-    //     }),
-    //     submit: {
-    //       type: "plain_text",
-    //       text: "등록",
-    //       emoji: true
-    //     },
-    //     close: {
-    //       type: "plain_text",
-    //       text: "취소",
-    //       emoji: true
-    //     },
-    //   }
-    // })
+    const jira = JiraClient.create({
+      host: process.env.JIRA_HOST,
+      username: process.env.JIRA_USERNAME,
+      token: process.env.JIRA_API_TOKEN
+    })
+
+    const [
+      projects,
+      issueTypes
+    ] = await Promise.all([
+      jira.getAllProjects(),
+      jira.getIssueTypes()
+    ])
 
     await slackWeb.chat.postMessage({
       thread_ts: payload.message.thread_ts ?? undefined,
       channel: payload.channel.id,
       text: '이슈 생성 미리보기: '+issue.title,
       blocks: generateJiraIssueCreateForm({
-        projects: dummyProjects,
+        projects: projects.map(proj => ({ id: proj.id, name: proj.name })),
+        issueTypes: issueTypes.map(types => ({ id: types.id, name: types.name })),
         titleDraft: issue.title,
         descriptionDraft: issue.description
       })
@@ -104,6 +88,7 @@ export async function subIssuePreview(body: SlackIssuePreviewMessageBody) {
 
 export function generateJiraIssueCreateForm(props: {
   projects: { id: string, name: string }[],
+  issueTypes: { id: string, name: string}[],
   titleDraft: string
   descriptionDraft: string,
 }): Array<Block|KnownBlock> {
@@ -116,8 +101,10 @@ export function generateJiraIssueCreateForm(props: {
         emoji: true
       }
     },
+    // Project
     {
       type: 'input',
+      block_id: 'project',
       label: {
         type: "plain_text",
         text: "프로젝트",
@@ -140,8 +127,36 @@ export function generateJiraIssueCreateForm(props: {
         }))
       }
     },
+    // Issue Types
+    {
+      type: 'input',
+      block_id: 'issue',
+      label: {
+        type: "plain_text",
+        text: "유형",
+        emoji: true
+      },
+      element: {
+        type: "static_select",
+        placeholder: {
+          type: "plain_text",
+          text: "이슈 유형 선택",
+          emoji: true
+        },
+        options: props.issueTypes.map(type => ({
+          text: {
+            type: 'plain_text',
+            text: type.name,
+            emoji: true
+          },
+          value: type.id
+        }))
+      }
+    },
+    // Project Title
     {
       type: "input",
+      block_id: 'title',
       element: {
         type: "plain_text_input",
         initial_value: props.titleDraft,
@@ -153,8 +168,10 @@ export function generateJiraIssueCreateForm(props: {
         emoji: true
       }
     },
+    // Project Description
     {
       type: "input",
+      block_id: 'description',
       element: {
         type: "plain_text_input",
         initial_value: props.descriptionDraft,
