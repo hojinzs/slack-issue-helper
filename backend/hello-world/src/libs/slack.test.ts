@@ -20,6 +20,6 @@ test('slack.chat.', async function () {
     channel: 'C04V9ANGR5Z'
   })
 
-  console.log(JSON.stringify(converstations))
+  console.log(JSON.stringify(conversations))
 
 })
