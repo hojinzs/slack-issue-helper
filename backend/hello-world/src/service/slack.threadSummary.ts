@@ -63,6 +63,19 @@ export async function subSummaryMessage(body: SlackThreadSummaryMessageBody) {
 
   const responseMessage = response.message?.content ?? '실패'
 
+  if (responseMessage === '실패') {
+    try {
+      await slackWeb.chat.postMessage({
+        thread_ts: payload.message.thread_ts ?? undefined,
+        channel: payload.channel.id,
+        text: '요약을 생성하는 도중 오류가 발생했습니다. 나중에 다시 시도해주세요.',
+      });
+    } catch (error) {
+      console.error('요약이 실패했다는 Slack message 날리는 도중 에러 발생 :', error);
+    }
+    return;
+  }
+
   if(processingMessage.ts) {
     await slackWeb.chat.delete({
       ts: processingMessage.ts,
