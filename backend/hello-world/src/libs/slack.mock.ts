@@ -5,7 +5,7 @@ export const conversationsMocks = {
     "type": "message",
     "text": "안녕하세요! 저는 인공지능 챗봇인 GPT-3 모델을 사용하여 응답하는 AI입니다. 제가 할 수 있는 일은 많은데, 대화를 나누거나 질문에 답변하며 정보를 제공할 수도 있어요. 무엇이든 궁금하시면 물어보세요! 최대한 친절한 어투로 답변해드리겠습니다 :)",
     "user": "U0501GURHGC",
-    "ts": "1680410948.295059",
+    "ts": "1680410948.295059", //원글 메세지 타임스탬프
     "app_id": "A04VDKU9A20",
     "blocks": [{
       "type": "rich_text",
@@ -32,7 +32,7 @@ export const conversationsMocks = {
       },
       "team_id": "T050K4RHNM6"
     },
-    "thread_ts": "1680410948.295059",
+    "thread_ts": "1680410948.295059", //원글TS
     "reply_count": 4,
     "reply_users_count": 2,
     "latest_reply": "1680411813.496209",
